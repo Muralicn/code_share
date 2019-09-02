@@ -1,0 +1,96 @@
+package com.test;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+
+public class CusipPriceReader {
+  
+    
+    public static void main(String[] args) {
+     final Map<String, List<BigDecimal>> cusipPriceBids = new HashMap<String, List<BigDecimal>>();
+  try {
+   final FileReader fileReader = new FileReader("C:/appl/price_files/Price_files_ABCDEFGH.csv");
+   BufferedReader bf = new BufferedReader(fileReader);
+   String line="";
+   String cusip = null;
+   while((line = bf.readLine()) != null) {
+     if(isValidCusip(line)) {
+      cusip = line.trim();
+      cusipPriceBids.put(cusip, new ArrayList<BigDecimal>());
+     } else {
+      final List<BigDecimal> priceBids = cusipPriceBids.get(cusip);
+      if(isValidNumber(line)) {
+       final BigDecimal price = new BigDecimal(line.trim());
+       priceBids.add(price);
+      } else {
+       if(line ==null || line.trim().isEmpty())
+        System.out.println("Cusip: ["+cusip+"] has missing price");
+       else
+        System.out.println("Cusip: ["+cusip+"] has price in non numeric format ["+line+"]");
+      }
+    }
+   }
+   bf.close();
+   fileReader.close();
+   
+  } catch (IOException e) {
+   
+   System.out.println(e.getLocalizedMessage());
+  }
+  
+      // printing all cusips with the latest price
+      if(!cusipPriceBids.isEmpty()) {
+       for(Map.Entry<String, List<BigDecimal>> entry : cusipPriceBids.entrySet()) {
+        final List<BigDecimal> priceList = entry.getValue();
+        if(null!=priceList && !priceList.isEmpty()) {
+         System.out.println("Cusip: ["+entry.getKey()+"] latest price: ["+priceList.get(priceList.size()-1)+"]");
+        } else {
+         System.out.println("Cusip: ["+entry.getKey()+"] donot have price data");
+        }
+       }
+      } 
+     }
+     
+     
+     
+     
+     
+    
+    public static boolean isValidCusip(String cusip) {
+     if(null !=cusip && !cusip.trim().isEmpty()) {
+      if(cusip.trim().length() == 8 && !cusip.trim().contains(" ")) {
+       try {
+        Double.parseDouble(cusip);
+        return false;
+       } catch (NumberFormatException nfe) {
+        return true;
+       }
+      } else {
+       return false;
+      }
+     } else {
+      return false;
+     }
+    }
+    
+    public static boolean isValidNumber(String price) {
+     if(null != price && !price.trim().isEmpty()) {
+      try {
+       Double.parseDouble(price.trim());
+       return true;
+      } catch(NumberFormatException fe) {
+       return false;
+      }
+     } else {
+      return false;
+     }
+    }
+
+}
+
