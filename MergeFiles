@@ -1,0 +1,134 @@
+package com.file.merge;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+public class MergeFiles {
+	
+	public  MergeFiles () {
+	}
+	public class TradeDetails {
+		private final String cusip;
+		private final String securityType;
+		private final String ticker;
+		private final Double qty;
+		
+		public TradeDetails(final String cusip, 
+								final String securityType,
+								final String ticker,
+								final Double qty) {
+			this.cusip = cusip;
+			this.ticker = ticker;
+			this.securityType = securityType;
+			this.qty = qty;
+		}
+		public String getCusip() {
+			return cusip;
+		}
+
+		public String getTicker() {
+			return ticker;
+		}
+		public String getSecurityType() {
+			return securityType;
+		}
+		public Double getQty(){
+			return qty;
+		}
+		@Override
+		public String toString() {
+			return "TradeDetails [cusip=" + cusip + ", securityType=" + securityType + ", ticker=" + ticker + ", qty="
+					+ qty + "]";
+		}
+	}
+
+	public static void main(String[] args) {
+		try {
+			final FileReader fileReader1 = new FileReader("C:/appl/trade_details/cusip_trade_details_1.txt");
+			final FileReader fileReader2 = new FileReader("C:/appl/trade_details/cusip_trade_details_2.txt");
+			final List<TradeDetails> tradeDetailList = new ArrayList<>();
+			fillTradeDetails(tradeDetailList, fileReader1);
+			fileReader1.close();
+			fillTradeDetails(tradeDetailList, fileReader2);
+			fileReader2.close();
+			
+			Collections.sort(tradeDetailList, new Comparator<TradeDetails>() {
+
+				@Override
+				public int compare(TradeDetails o1, TradeDetails o2) {
+					int x = o1.getSecurityType().compareToIgnoreCase(o2.getSecurityType());
+					if(x==0) {
+						x= o2.getQty().compareTo(o1.getQty());
+						if(x==0) {
+							x=o1.getCusip().compareToIgnoreCase(o2.getCusip());
+						}
+					}
+					return x;
+				}
+			});
+			System.out.println("Merged file with sort order");
+			for(final TradeDetails tradeDetails: tradeDetailList) {
+				System.out.println(tradeDetails);
+			}
+		} catch (IOException e) {
+			System.out.println(e.getLocalizedMessage());
+		}
+		
+
+	}
+	
+	private static boolean isAllDataPresent(String[] lineItems) {
+		if(lineItems !=null && lineItems.length == 4) {
+			boolean isAllPresent = true;
+			for(final String item: lineItems) {
+				if(null == item || item.trim().isEmpty()) {
+					isAllPresent = false;
+				}
+			}
+			return isAllPresent;
+		} else {
+			return false;
+		}
+	}
+	
+	private static boolean isNumeric(String line) {
+		if(line != null && !line.trim().isEmpty()) {
+			try {
+				Double.parseDouble(line.trim());
+				return true;
+			} catch (NumberFormatException nfe) {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+	
+	private static void fillTradeDetails(final List<TradeDetails> tradeDetailsList, 
+			            final FileReader fileReader) throws NumberFormatException, IOException {
+		final BufferedReader reader = new BufferedReader(fileReader);
+		String line = null;
+		final MergeFiles mergeFiles = new MergeFiles();
+		while((line=reader.readLine()) !=null) {
+			final String[] lineItems = line.split(",");
+			if(isAllDataPresent(lineItems)) {
+			   if(isNumeric(lineItems[3])) {
+				   final TradeDetails tradeDetails = mergeFiles.new TradeDetails(lineItems[0], 
+						                                              lineItems[1],
+						                                              lineItems[2],
+						                                              Double.valueOf(lineItems[3]));
+				   tradeDetailsList.add(tradeDetails);
+			   } 
+			}
+			
+		}
+		reader.close();
+	}
+
+
+}
